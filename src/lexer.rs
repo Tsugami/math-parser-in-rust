@@ -39,23 +39,20 @@ impl Lexer {
                 '*' => Token::Multi,
                 '/' => Token::Div,
                 char if char.is_digit(10) => {
-                    let cur_char = self.cursor - 1;
+                    self.cursor -= 1;
 
-                    let num = self
-                        .characters
-                        .iter()
-                        .skip(cur_char)
-                        .take_while(|x| {
-                            let is_digit = x.is_digit(10);
-                            if is_digit {
-                                self.cursor += 1;
-                            }
+                    let mut acc = String::new();
 
-                            return is_digit;
-                        })
-                        .fold(String::new(), |acc, cur| format!("{acc}{cur}"))
-                        .parse::<i64>()
-                        .unwrap();
+                    while let Some(c) = self.characters.get(self.cursor) {
+                        if c.is_digit(10) {
+                            acc.push(*c);
+                            self.cursor += 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let num = acc.parse::<i64>().unwrap();
 
                     Token::Number(num)
                 }
@@ -121,6 +118,15 @@ mod tests {
 
         use crate::lexer::Token::{Add, Number};
 
-        assert_eq!(tokens, vec![Number(1230), Add, Number(24),]);
+        assert_eq!(tokens, vec![Number(1230), Add, Number(24)]);
+    }
+
+    #[test]
+    fn no_whitespace() {
+        let tokens = Lexer::from_str("1230+24").extract_tokens().unwrap();
+
+        use crate::lexer::Token::{Add, Number};
+
+        assert_eq!(tokens, vec![Number(1230), Add, Number(24)]);
     }
 }
