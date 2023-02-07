@@ -66,7 +66,10 @@ impl MathParser {
                         let mut rhs: Vec<Token> = rhs.into();
 
                         // skip op
+                        // input= 1 + 2
+                        // lhs = [1] rhs = [+, 2]
                         rhs.remove(0);
+                        // lhs = [1] rhs = [2]
 
                         let rhs = Self::build_ast(rhs.into(), min_precedence + 1)?;
                         let lhs = Self::build_ast(lhs.into(), min_precedence + 1)?;
