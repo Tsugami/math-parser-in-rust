@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     Add,
     Sub,
@@ -14,14 +14,18 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    pub fn from_str(input: &str) -> Self {
+    pub fn from_str(input: &str) -> Result<Vec<Token>, String> {
+        Self::new(input).extract_tokens()
+    }
+
+    fn new(input: &str) -> Self {
         Self {
             cursor: 0,
             characters: input.chars().collect(),
         }
     }
 
-    pub fn extract_tokens(&mut self) -> Result<Vec<Token>, String> {
+    fn extract_tokens(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens: Vec<Token> = vec![];
 
         loop {
@@ -73,7 +77,7 @@ mod tests {
     #[test]
     fn new_lexer() {
         assert_eq!(
-            Lexer::from_str("1 + 2"),
+            Lexer::new("1 + 2"),
             Lexer {
                 cursor: 0,
                 characters: vec!['1', ' ', '+', ' ', '2']
@@ -83,16 +87,14 @@ mod tests {
 
     #[test]
     fn sample_sum() {
-        let tokens = Lexer::from_str("1 + 2").extract_tokens().unwrap();
+        let tokens = Lexer::new("1 + 2").extract_tokens().unwrap();
 
         assert_eq!(tokens, vec![Token::Number(1), Token::Add, Token::Number(2)]);
     }
 
     #[test]
     fn full_sample() {
-        let tokens = Lexer::from_str("1 + 2 / 3 * 4 - 1")
-            .extract_tokens()
-            .unwrap();
+        let tokens = Lexer::new("1 + 2 / 3 * 4 - 1").extract_tokens().unwrap();
 
         use crate::lexer::Token::{Add, Div, Multi, Number, Sub};
 
@@ -114,7 +116,7 @@ mod tests {
 
     #[test]
     fn big_number() {
-        let tokens = Lexer::from_str("1230 + 24").extract_tokens().unwrap();
+        let tokens = Lexer::new("1230 + 24").extract_tokens().unwrap();
 
         use crate::lexer::Token::{Add, Number};
 
@@ -123,10 +125,10 @@ mod tests {
 
     #[test]
     fn no_whitespace() {
-        let tokens = Lexer::from_str("1230+24").extract_tokens().unwrap();
+        let tokens = Lexer::new("1230+24+1").extract_tokens().unwrap();
 
         use crate::lexer::Token::{Add, Number};
 
-        assert_eq!(tokens, vec![Number(1230), Add, Number(24)]);
+        assert_eq!(tokens, vec![Number(1230), Add, Number(24), Add, Number(1)]);
     }
 }
