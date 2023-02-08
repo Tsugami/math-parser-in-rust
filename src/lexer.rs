@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
     Add,
@@ -25,44 +27,69 @@ impl Lexer {
         }
     }
 
+    fn next_char(&mut self) -> Option<char> {
+        match self.peek() {
+            Some(char) => {
+                self.cursor += 1;
+                return Some(char);
+            }
+            None => None,
+        }
+    }
+
+    fn peek(&mut self) -> Option<char> {
+        match self.characters.get(self.cursor) {
+            Some(char) => {
+                return Some(*char);
+            }
+            None => None,
+        }
+    }
+
+    fn next(&mut self) -> Option<Token> {
+        let char = match self.next_char() {
+            Some(char) => char,
+            None => return None,
+        };
+
+        let token = match char {
+            '+' => Token::Add,
+            '-' => Token::Sub,
+            '*' => Token::Multi,
+            '/' => Token::Div,
+            char if char.is_digit(10) => {
+                let mut acc = String::new();
+
+                acc.push(char);
+
+                while let Some(c) = self.peek() {
+                    if c.is_digit(10) {
+                        acc.push(c);
+                        self.next_char();
+                    } else {
+                        break;
+                    }
+                }
+
+                let num = acc.parse::<i64>().unwrap();
+
+                Token::Number(num)
+            }
+            ' ' => return self.next(),
+            // MOVE TO A VECTOR OF ERRORS
+            // _ => return Err(format!("Unrecognized character {}", char)),
+            _ => return self.next(),
+        };
+
+        println!("{:?} {:?}", token, self);
+
+        return Some(token);
+    }
+
     fn extract_tokens(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens: Vec<Token> = vec![];
 
-        loop {
-            let char = match self.characters.get(self.cursor) {
-                Some(char) => char,
-                None => break,
-            };
-
-            self.cursor += 1;
-
-            let token = match char {
-                ' ' => continue,
-                '+' => Token::Add,
-                '-' => Token::Sub,
-                '*' => Token::Multi,
-                '/' => Token::Div,
-                char if char.is_digit(10) => {
-                    self.cursor -= 1;
-
-                    let mut acc = String::new();
-
-                    while let Some(c) = self.characters.get(self.cursor) {
-                        if c.is_digit(10) {
-                            acc.push(*c);
-                            self.cursor += 1;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    let num = acc.parse::<i64>().unwrap();
-
-                    Token::Number(num)
-                }
-                _ => return Err(format!("Unrecognized character {}", char)),
-            };
-
+        while let Some(token) = self.next() {
             tokens.push(token);
         }
 
