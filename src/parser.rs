@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::lexer::{Lexer, Token};
 
 #[derive(Debug, PartialEq)]
@@ -7,6 +9,19 @@ enum Operator {
     Sub,
     Multi,
     Div,
+}
+
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let op = match self {
+            Operator::Add => "+",
+            Operator::Sub => "-",
+            Operator::Multi => "*",
+            Operator::Div => "/",
+        };
+
+        write!(f, "{}", op)
+    }
 }
 
 impl TryFrom<Token> for Operator {
@@ -38,12 +53,12 @@ pub struct MathParser {}
 impl MathParser {
     pub fn parse(input: &str) -> Result<i64, String> {
         let tokens = Lexer::from_str(input)?;
-        let ast = Self::build_ast(tokens, 0)?;
+        let ast = Self::build_ast(tokens, None)?;
 
         Ok(Self::eval(&ast))
     }
 
-    fn infix_binding_power(token: &Token) -> i64 {
+    fn token_priority(token: &Token) -> i64 {
         match token {
             Token::Add => 1,
             Token::Sub => 2,
@@ -53,11 +68,29 @@ impl MathParser {
         }
     }
 
-    fn build_ast(tokens: Vec<Token>, min_precedence: i64) -> Result<Node, String> {
+    fn ast_to_source_with_params(ast: &Node) -> String {
+        match ast {
+            Node::Number(num) => num.to_string(),
+            Node::BinaryExpr { op, left, right } => {
+                let left = Self::ast_to_source_with_params(left);
+                let right = Self::ast_to_source_with_params(right);
+                format!("({left} {op} {right})")
+            }
+        }
+    }
+
+    fn build_ast(tokens: Vec<Token>, priority: Option<i64>) -> Result<Node, String> {
         let mut cursor = 0;
 
+        let initial_priority = 1;
+
+        let priority = match priority {
+            Some(v) => v,
+            _ => initial_priority,
+        };
+
         while let Some(token) = tokens.get(cursor) {
-            if Self::infix_binding_power(token) > min_precedence {
+            if Self::token_priority(token) == priority {
                 let result = match token {
                     Token::Number(num) => Node::Number(*num),
                     op => {
@@ -71,8 +104,8 @@ impl MathParser {
                         rhs.remove(0);
                         // lhs = [1] rhs = [2]
 
-                        let rhs = Self::build_ast(rhs.into(), min_precedence + 1)?;
-                        let lhs = Self::build_ast(lhs.into(), min_precedence + 1)?;
+                        let rhs = Self::build_ast(rhs.into(), Some(priority))?;
+                        let lhs = Self::build_ast(lhs.into(), Some(priority))?;
 
                         let op = *op;
 
@@ -90,7 +123,9 @@ impl MathParser {
             cursor += 1;
         }
 
-        Self::build_ast(tokens, -1)
+        let priority = if priority > 4 { 0 } else { priority + 1 };
+
+        Self::build_ast(tokens, Some(priority))
     }
 
     fn eval(node: &Node) -> i64 {
@@ -102,8 +137,8 @@ impl MathParser {
                 match op {
                     Operator::Add => left + right,
                     Operator::Sub => left - right,
-                    Operator::Div => left / right,
                     Operator::Multi => left * right,
+                    Operator::Div => left / right,
                 }
             }
         }
@@ -120,7 +155,7 @@ mod tests {
     #[test]
     fn sample_ast() {
         let tokens = Lexer::from_str("1 + 2").unwrap();
-        let ast = MathParser::build_ast(tokens, 0);
+        let ast = MathParser::build_ast(tokens, None);
 
         assert_eq!(
             ast.unwrap(),
@@ -133,9 +168,42 @@ mod tests {
     }
 
     #[test]
+    fn complexly_ast() {
+        let tokens = Lexer::from_str("1 + 3 - 1 + 2").unwrap();
+        let ast = MathParser::build_ast(tokens, None);
+
+        use crate::parser::Node::{BinaryExpr, Number};
+        use crate::parser::Operator::{Add, Sub};
+
+        assert_eq!(
+            ast.unwrap(),
+            BinaryExpr {
+                op: Add,
+                left: Box::new(Number(1)),
+                right: Box::new(BinaryExpr {
+                    op: Add,
+                    left: Box::new(BinaryExpr {
+                        op: Sub,
+                        left: Box::new(Number(3)),
+                        right: Box::new(Number(1))
+                    }),
+                    right: Box::new(Number(2))
+                })
+            }
+        );
+    }
+
+    #[test]
     fn sample_sum() {
         let result = MathParser::parse("1 + 2").unwrap();
 
         assert_eq!(result, 3)
+    }
+
+    #[test]
+    fn complexity_sum() {
+        let result = MathParser::parse("4 - 32 + 1 - 34 / 5 * 10 + 140").unwrap();
+
+        assert_eq!(result, 45)
     }
 }
