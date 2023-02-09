@@ -1,9 +1,8 @@
 use std::fmt;
 
-use crate::lexer::{Lexer, Token};
+use crate::{lexer::Lexer, token::Token};
 
 #[derive(Debug, PartialEq)]
-
 enum Operator {
     Add,
     Sub,

@@ -1,13 +1,4 @@
-use std::str::Chars;
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Token {
-    Add,
-    Sub,
-    Multi,
-    Div,
-    Number(i64),
-}
+use crate::token::Token;
 
 #[derive(Debug, PartialEq)]
 pub struct Lexer {
