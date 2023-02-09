@@ -62,7 +62,7 @@ impl Lexer {
                     }
                 }
 
-                let num = acc.parse::<i64>().unwrap();
+                let num = acc.parse::<usize>().unwrap();
 
                 Token::Number(num)
             }

@@ -4,5 +4,5 @@ pub enum Token {
     Minus, // -
     Star,  // *
     Slash, // /
-    Number(i64),
+    Number(usize),
 }

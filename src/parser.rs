@@ -39,7 +39,7 @@ impl TryFrom<Token> for Operator {
 
 #[derive(Debug, PartialEq)]
 enum Node {
-    Number(i64),
+    Number(usize),
     BinaryExpr {
         op: Operator,
         left: Box<Node>,
@@ -54,7 +54,7 @@ impl MathParser {
         let tokens = Lexer::from_str(input)?;
         let ast = Self::build_ast(tokens, None)?;
 
-        Ok(Self::eval(&ast))
+        Ok(Self::eval(&ast).try_into().unwrap())
     }
 
     fn token_priority(token: &Token) -> i64 {
@@ -127,7 +127,7 @@ impl MathParser {
         Self::build_ast(tokens, Some(priority))
     }
 
-    fn eval(node: &Node) -> i64 {
+    fn eval(node: &Node) -> usize {
         match node {
             Node::Number(num) => *num,
             Node::BinaryExpr { op, left, right } => {
