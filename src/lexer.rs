@@ -44,10 +44,10 @@ impl Lexer {
         };
 
         let token = match char {
-            '+' => Token::Add,
-            '-' => Token::Sub,
-            '*' => Token::Multi,
-            '/' => Token::Div,
+            '+' => Token::Plus,
+            '-' => Token::Minus,
+            '*' => Token::Star,
+            '/' => Token::Slash,
             char if char.is_digit(10) => {
                 let mut acc = String::new();
 
@@ -107,26 +107,29 @@ mod tests {
     fn sample_sum() {
         let tokens = Lexer::new("1 + 2").extract_tokens().unwrap();
 
-        assert_eq!(tokens, vec![Token::Number(1), Token::Add, Token::Number(2)]);
+        assert_eq!(
+            tokens,
+            vec![Token::Number(1), Token::Plus, Token::Number(2)]
+        );
     }
 
     #[test]
     fn full_sample() {
         let tokens = Lexer::new("1 + 2 / 3 * 4 - 1").extract_tokens().unwrap();
 
-        use crate::lexer::Token::{Add, Div, Multi, Number, Sub};
+        use crate::lexer::Token::{Minus, Number, Plus, Slash, Star};
 
         assert_eq!(
             tokens,
             vec![
                 Number(1),
-                Add,
+                Plus,
                 Number(2),
-                Div,
+                Slash,
                 Number(3),
-                Multi,
+                Star,
                 Number(4),
-                Sub,
+                Minus,
                 Number(1)
             ]
         );
@@ -136,17 +139,20 @@ mod tests {
     fn big_number() {
         let tokens = Lexer::new("1230 + 24").extract_tokens().unwrap();
 
-        use crate::lexer::Token::{Add, Number};
+        use crate::lexer::Token::{Number, Plus};
 
-        assert_eq!(tokens, vec![Number(1230), Add, Number(24)]);
+        assert_eq!(tokens, vec![Number(1230), Plus, Number(24)]);
     }
 
     #[test]
     fn no_whitespace() {
         let tokens = Lexer::new("1230+24+1").extract_tokens().unwrap();
 
-        use crate::lexer::Token::{Add, Number};
+        use crate::lexer::Token::{Number, Plus};
 
-        assert_eq!(tokens, vec![Number(1230), Add, Number(24), Add, Number(1)]);
+        assert_eq!(
+            tokens,
+            vec![Number(1230), Plus, Number(24), Plus, Number(1)]
+        );
     }
 }

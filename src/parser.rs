@@ -28,10 +28,10 @@ impl TryFrom<Token> for Operator {
 
     fn try_from(token: Token) -> Result<Self, Self::Error> {
         match token {
-            Token::Add => Ok(Operator::Add),
-            Token::Sub => Ok(Operator::Sub),
-            Token::Multi => Ok(Operator::Multi),
-            Token::Div => Ok(Operator::Div),
+            Token::Plus => Ok(Operator::Add),
+            Token::Minus => Ok(Operator::Sub),
+            Token::Star => Ok(Operator::Multi),
+            Token::Slash => Ok(Operator::Div),
             _ => Err(format!("invalid operator from token")),
         }
     }
@@ -59,10 +59,10 @@ impl MathParser {
 
     fn token_priority(token: &Token) -> i64 {
         match token {
-            Token::Add => 1,
-            Token::Sub => 2,
-            Token::Multi => 3,
-            Token::Div => 4,
+            Token::Plus => 1,
+            Token::Minus => 2,
+            Token::Star => 3,
+            Token::Slash => 4,
             _ => 0,
         }
     }

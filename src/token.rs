@@ -1,8 +1,8 @@
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token {
-    Add,
-    Sub,
-    Multi,
-    Div,
+    Plus,  // +
+    Minus, // -
+    Star,  // *
+    Slash, // /
     Number(i64),
 }
